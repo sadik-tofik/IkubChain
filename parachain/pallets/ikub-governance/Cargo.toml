@@ -1,0 +1,43 @@
+[package]
+name = "pallet-ikub-governance"
+version = "0.1.0"
+description = "IkubChain Governance Pallet - Sophisticated voting mechanisms for investment decisions"
+authors = ["IkubChain Team"]
+edition = "2021"
+license = "Apache-2.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+frame-benchmarking = { version = "4.0.0", default-features = false, optional = true }
+frame-support = { version = "4.0.0", default-features = false }
+frame-system = { version = "4.0.0", default-features = false }
+sp-runtime = { version = "6.0.0", default-features = false }
+sp-std = { version = "4.0.0", default-features = false }
+sp-core = { version = "6.0.0", default-features = false }
+
+[dev-dependencies]
+sp-core = { version = "6.0.0", default-features = true }
+sp-io = { version = "4.0.0", default-features = true }
+sp-runtime = { version = "6.0.0", default-features = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-benchmarking/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "sp-core/std",
+]
+

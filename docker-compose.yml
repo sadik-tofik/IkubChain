@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  parachain-node:
+    build:
+      context: ./parachain
+      dockerfile: Dockerfile
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+    volumes:
+      - ./parachain:/app
+    command: --dev --ws-external --rpc-external
+    networks:
+      - ikubchain-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_WS_URL=ws://parachain-node:9944
+    depends_on:
+      - parachain-node
+    networks:
+      - ikubchain-network
+
+networks:
+  ikubchain-network:
+    driver: bridge

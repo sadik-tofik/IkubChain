@@ -1,0 +1,120 @@
+[package]
+name = "ikubchain-runtime"
+version = "0.1.0"
+description = "IkubChain Runtime"
+authors = ["IkubChain Team"]
+edition = "2021"
+license = "Apache-2.0"
+
+[build-dependencies]
+substrate-wasm-builder = { version = "5.0.0", default-features = false }
+
+[dependencies]
+# Substrate
+sp-api = { version = "4.0.0", default-features = false }
+sp-block-builder = { version = "4.0.0", default-features = false }
+sp-blockchain = { version = "4.0.0", default-features = false }
+sp-consensus-aura = { version = "0.10.0", default-features = false }
+sp-core = { version = "6.0.0", default-features = false }
+sp-inherents = { version = "4.0.0", default-features = false }
+sp-offchain = { version = "4.0.0", default-features = false }
+sp-runtime = { version = "6.0.0", default-features = false }
+sp-session = { version = "4.0.0", default-features = false }
+sp-std = { version = "4.0.0", default-features = false }
+sp-transaction-pool = { version = "4.0.0", default-features = false }
+sp-version = { version = "5.0.0", default-features = false }
+
+# Substrate FRAME
+frame-benchmarking = { version = "4.0.0", default-features = false, optional = true }
+frame-executive = { version = "4.0.0", default-features = false }
+frame-support = { version = "4.0.0", default-features = false }
+frame-system = { version = "4.0.0", default-features = false }
+frame-system-benchmarking = { version = "4.0.0", default-features = false, optional = true }
+frame-system-rpc-runtime-api = { version = "4.0.0", default-features = false }
+pallet-aura = { version = "4.0.0", default-features = false }
+pallet-balances = { version = "4.0.0", default-features = false }
+pallet-grandpa = { version = "4.0.0", default-features = false }
+pallet-randomness-collective-flip = { version = "4.0.0", default-features = false }
+pallet-sudo = { version = "4.0.0", default-features = false }
+pallet-timestamp = { version = "4.0.0", default-features = false }
+pallet-transaction-payment = { version = "4.0.0", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0", default-features = false }
+
+# Polkadot
+polkadot-parachain = { version = "0.9.0", default-features = false }
+polkadot-runtime-common = { version = "0.9.0", default-features = false }
+cumulus-pallet-parachain-system = { version = "0.9.0", default-features = false }
+cumulus-pallet-xcmp-queue = { version = "0.9.0", default-features = false }
+cumulus-primitives-core = { version = "0.9.0", default-features = false }
+cumulus-primitives-parachain-inherent = { version = "0.9.0", default-features = false }
+
+# XCM
+xcm = { version = "3.0.0", default-features = false }
+xcm-executor = { version = "3.0.0", default-features = false }
+pallet-xcm = { version = "4.0.0", default-features = false }
+
+# IkubChain Pallets
+pallet-ikub-governance = { path = "../pallets/ikub-governance", default-features = false }
+pallet-ikub-treasury = { path = "../pallets/ikub-treasury", default-features = false }
+pallet-ikub-crosschain = { path = "../pallets/ikub-crosschain", default-features = false }
+pallet-ikub-members = { path = "../pallets/ikub-members", default-features = false }
+pallet-ikub-disputes = { path = "../pallets/ikub-disputes", default-features = false }
+pallet-ikub-analytics = { path = "../pallets/ikub-analytics", default-features = false }
+
+# Serde
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-system-benchmarking/runtime-benchmarks",
+    "pallet-balances/runtime-benchmarks",
+    "pallet-ikub-governance/runtime-benchmarks",
+    "pallet-ikub-treasury/runtime-benchmarks",
+]
+std = [
+    "sp-api/std",
+    "sp-block-builder/std",
+    "sp-blockchain/std",
+    "sp-consensus-aura/std",
+    "sp-core/std",
+    "sp-inherents/std",
+    "sp-offchain/std",
+    "sp-runtime/std",
+    "sp-session/std",
+    "sp-std/std",
+    "sp-transaction-pool/std",
+    "sp-version/std",
+    "frame-benchmarking/std",
+    "frame-executive/std",
+    "frame-support/std",
+    "frame-system/std",
+    "frame-system-benchmarking/std",
+    "frame-system-rpc-runtime-api/std",
+    "pallet-aura/std",
+    "pallet-balances/std",
+    "pallet-grandpa/std",
+    "pallet-randomness-collective-flip/std",
+    "pallet-sudo/std",
+    "pallet-timestamp/std",
+    "pallet-transaction-payment/std",
+    "pallet-transaction-payment-rpc-runtime-api/std",
+    "polkadot-parachain/std",
+    "polkadot-runtime-common/std",
+    "cumulus-pallet-parachain-system/std",
+    "cumulus-pallet-xcmp-queue/std",
+    "cumulus-primitives-core/std",
+    "cumulus-primitives-parachain-inherent/std",
+    "xcm/std",
+    "xcm-executor/std",
+    "pallet-xcm/std",
+    "pallet-ikub-governance/std",
+    "pallet-ikub-treasury/std",
+    "pallet-ikub-crosschain/std",
+    "pallet-ikub-members/std",
+    "pallet-ikub-disputes/std",
+    "pallet-ikub-analytics/std",
+    "serde",
+]
+

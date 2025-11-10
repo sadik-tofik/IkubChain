@@ -1,0 +1,21 @@
+[package]
+name = "ikubchain-parachain"
+version = "0.1.0"
+description = "IkubChain - Decentralized Investment Club Platform on Polkadot"
+authors = ["IkubChain Team"]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/ikubchain/ikubchain"
+
+[workspace]
+members = [
+    "node",
+    "pallets/*",
+    "runtime",
+]
+
+[profile.release]
+panic = "unwind"
+codegen-units = 1
+lto = true
+

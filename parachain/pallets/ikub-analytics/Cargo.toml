@@ -1,0 +1,25 @@
+[package]
+name = "pallet-ikub-analytics"
+version = "0.1.0"
+description = "IkubChain Analytics Pallet - On-chain analytics and reporting"
+authors = ["IkubChain Team"]
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+frame-support = { version = "4.0.0", default-features = false }
+frame-system = { version = "4.0.0", default-features = false }
+sp-runtime = { version = "6.0.0", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+]
+
