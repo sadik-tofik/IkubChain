@@ -11,47 +11,50 @@ substrate-wasm-builder = { version = "5.0.0", default-features = false }
 
 [dependencies]
 # Substrate
-sp-api = { version = "4.0.0", default-features = false }
-sp-block-builder = { version = "4.0.0", default-features = false }
-sp-blockchain = { version = "4.0.0", default-features = false }
-sp-consensus-aura = { version = "0.10.0", default-features = false }
-sp-core = { version = "6.0.0", default-features = false }
-sp-inherents = { version = "4.0.0", default-features = false }
-sp-offchain = { version = "4.0.0", default-features = false }
-sp-runtime = { version = "6.0.0", default-features = false }
-sp-session = { version = "4.0.0", default-features = false }
-sp-std = { version = "4.0.0", default-features = false }
-sp-transaction-pool = { version = "4.0.0", default-features = false }
-sp-version = { version = "5.0.0", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-block-builder = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-blockchain = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-inherents = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-offchain = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-session = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-version = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 
 # Substrate FRAME
-frame-benchmarking = { version = "4.0.0", default-features = false, optional = true }
-frame-executive = { version = "4.0.0", default-features = false }
-frame-support = { version = "4.0.0", default-features = false }
-frame-system = { version = "4.0.0", default-features = false }
-frame-system-benchmarking = { version = "4.0.0", default-features = false, optional = true }
-frame-system-rpc-runtime-api = { version = "4.0.0", default-features = false }
-pallet-aura = { version = "4.0.0", default-features = false }
-pallet-balances = { version = "4.0.0", default-features = false }
-pallet-grandpa = { version = "4.0.0", default-features = false }
-pallet-randomness-collective-flip = { version = "4.0.0", default-features = false }
-pallet-sudo = { version = "4.0.0", default-features = false }
-pallet-timestamp = { version = "4.0.0", default-features = false }
-pallet-transaction-payment = { version = "4.0.0", default-features = false }
-pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false, optional = true }
+frame-executive = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false, optional = true }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-aura = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-grandpa = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-insecure-randomness-collective-flip = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", package = "pallet-insecure-randomness-collective-flip", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 
 # Polkadot
-polkadot-parachain = { version = "0.9.0", default-features = false }
-polkadot-runtime-common = { version = "0.9.0", default-features = false }
-cumulus-pallet-parachain-system = { version = "0.9.0", default-features = false }
-cumulus-pallet-xcmp-queue = { version = "0.9.0", default-features = false }
-cumulus-primitives-core = { version = "0.9.0", default-features = false }
-cumulus-primitives-parachain-inherent = { version = "0.9.0", default-features = false }
+polkadot-parachain = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", default-features = false }
+polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", default-features = false }
+
+# Cumulus
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus.git", rev = "f603a61ff370fc33740c9373833c3c6ba1486846", default-features = false }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus.git", rev = "f603a61ff370fc33740c9373833c3c6ba1486846", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus.git", rev = "f603a61ff370fc33740c9373833c3c6ba1486846", default-features = false }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus.git", rev = "f603a61ff370fc33740c9373833c3c6ba1486846", default-features = false }
 
 # XCM
-xcm = { version = "3.0.0", default-features = false }
-xcm-executor = { version = "3.0.0", default-features = false }
-pallet-xcm = { version = "4.0.0", default-features = false }
+xcm = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", package = "xcm", default-features = false }
+xcm-builder = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", default-features = false }
+xcm-executor = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", package = "xcm-executor", default-features = false }
+pallet-xcm = { git = "https://github.com/paritytech/polkadot.git", rev = "6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd", package = "pallet-xcm", default-features = false }
 
 # IkubChain Pallets
 pallet-ikub-governance = { path = "../pallets/ikub-governance", default-features = false }
@@ -76,7 +79,6 @@ runtime-benchmarks = [
 std = [
     "sp-api/std",
     "sp-block-builder/std",
-    "sp-blockchain/std",
     "sp-consensus-aura/std",
     "sp-core/std",
     "sp-inherents/std",
@@ -95,7 +97,7 @@ std = [
     "pallet-aura/std",
     "pallet-balances/std",
     "pallet-grandpa/std",
-    "pallet-randomness-collective-flip/std",
+    "pallet-insecure-randomness-collective-flip/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment/std",

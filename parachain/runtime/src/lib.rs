@@ -3,19 +3,13 @@
 pub mod constants;
 pub use constants::*;
 
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{ConstU128, ConstU32, ConstU64, EitherOfDiverse, EqualPrivilege, Nothing},
+    traits::{ConstU128, ConstU32, ConstU64, ConstU16, ConstU8, EitherOfDiverse, EqualPrivilege, Nothing, Get},
     weights::Weight,
 };
 use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::CurrencyAdapter;
-use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::{
-    impls::ToAuthor,
-    xcm_sender::ChildParachainRouter,
-};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -26,8 +20,6 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
-use xcm::latest::prelude::*;
-use xcm_executor::XcmExecutor;
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -39,6 +31,18 @@ pub use pallet_ikub_crosschain;
 pub use pallet_ikub_members;
 pub use pallet_ikub_disputes;
 pub use pallet_ikub_analytics;
+
+/// Runtime API versions
+pub const RUNTIME_API_VERSIONS: sp_version::RuntimeVersion = sp_version::RuntimeVersion {
+    spec_name: create_runtime_str!("ikubchain"),
+    impl_name: create_runtime_str!("ikubchain"),
+    authoring_version: 1,
+    spec_version: 1,
+    impl_version: 0,
+    apis: sp_version::create_apis_vec!([]),
+    transaction_version: 1,
+    state_version: 1,
+};
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -88,7 +92,9 @@ impl frame_system::Config for Runtime {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
     type SS58Prefix = ConstU16<42>;
-    type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+    // For MVP standalone mode, use frame_system's default
+    // In production parachain, use: cumulus_pallet_parachain_system::ParachainSetCode<Self>
+    type OnSetCode = frame_system::DefaultOnSetCode<Self>;
     type MaxConsumers = ConstU32<16>;
 }
 
@@ -140,6 +146,8 @@ impl pallet_ikub_governance::Config for Runtime {
 parameter_types! {
     pub const MaxSigners: u32 = 10;
     pub const MinSignatures: u32 = 3;
+    pub const MinContribution: u128 = 1000;
+    pub const DefaultContributionPeriod: u32 = 10000; // blocks
 }
 
 impl pallet_ikub_treasury::Config for Runtime {
@@ -147,10 +155,15 @@ impl pallet_ikub_treasury::Config for Runtime {
     type Currency = Balances;
     type MaxSigners = MaxSigners;
     type MinSignatures = MinSignatures;
+    type MinContribution = ConstU128<MinContribution>;
+    type DefaultContributionPeriod = ConstU32<DefaultContributionPeriod>;
 }
 
+// For MVP, we'll simplify the crosschain config
+// In production, this would need proper XCM configuration
 impl pallet_ikub_crosschain::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
 }
 
 parameter_types! {
@@ -346,7 +359,15 @@ sp_api::impl_runtime_apis! {
 
     impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
         fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
-            ParachainSystem::collect_collation_info(header)
+            // For MVP standalone mode, return empty collation info
+            // In production, this would use ParachainSystem
+            cumulus_primitives_core::CollationInfo {
+                upward_messages: vec![],
+                horizontal_messages: vec![],
+                new_validation_code: None,
+                processed_downward_messages: 0,
+                hrmp_watermark: 0,
+            }
         }
     }
 }

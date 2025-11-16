@@ -9,7 +9,7 @@ pub mod pallet {
         traits::{Currency, ReservableCurrency},
     };
     use frame_system::pallet_prelude::*;
-    use sp_runtime::traits::{AccountIdConversion, Saturating};
+    use sp_runtime::traits::{AccountIdConversion, Saturating, Zero, SaturatedConversion};
     use scale_info::TypeInfo;
     use codec::{Decode, Encode, MaxEncodedLen};
 
@@ -381,19 +381,51 @@ pub mod pallet {
                 Error::<T>::AlreadyVoted
             );
             
-            // Get voting power (simplified - would integrate with members pallet)
+            // Get voting power (balance)
             let voting_power = T::Currency::free_balance(&voter);
             
-            // Apply voting mechanism (simplified - full implementation would handle quadratic, conviction, etc.)
-            let weighted_power = match proposal.voting_mechanism {
-                VotingMechanism::SimpleMajority => voting_power,
-                VotingMechanism::Quadratic => {
-                    // Simplified quadratic voting - sqrt of balance
-                    // Full implementation would use fixed point math
-                    voting_power
+            // Apply voting mechanism
+            let (weighted_power, cost) = match proposal.voting_mechanism {
+                VotingMechanism::SimpleMajority => {
+                    // Simple majority: 1 vote = 1 unit of balance
+                    (voting_power, voting_power)
                 },
-                VotingMechanism::Conviction => voting_power,
-                VotingMechanism::Delegated => voting_power,
+                VotingMechanism::Quadratic => {
+                    // Quadratic voting: cost = votes^2
+                    // For MVP: Calculate max votes user can afford: votes = sqrt(balance)
+                    // Then cost = votes^2 = balance (approximately)
+                    // This ensures cost = votes^2 relationship
+                    let max_votes = Self::integer_sqrt(voting_power);
+                    
+                    // For MVP, user votes with max_votes, cost = max_votes^2
+                    let cost = Self::multiply_checked(max_votes, max_votes)
+                        .unwrap_or(voting_power);
+                    
+                    // Cap cost at available balance
+                    let actual_cost = if cost > voting_power {
+                        voting_power
+                    } else {
+                        cost
+                    };
+                    
+                    // Recalculate votes based on actual cost: votes = sqrt(cost)
+                    let actual_votes = Self::integer_sqrt(actual_cost);
+                    
+                    // Reserve the cost
+                    T::Currency::reserve(&voter, actual_cost)?;
+                    
+                    (actual_votes, actual_cost)
+                },
+                VotingMechanism::Conviction => {
+                    // Conviction voting: longer lock = more weight
+                    // Simplified for MVP: use balance as power
+                    (voting_power, voting_power)
+                },
+                VotingMechanism::Delegated => {
+                    // Delegated voting: use delegated power
+                    // Simplified for MVP: use balance as power
+                    (voting_power, voting_power)
+                },
             };
             
             let vote = Vote {
@@ -489,6 +521,42 @@ pub mod pallet {
             ActiveProposals::<T>::insert(club_id, active);
             
             Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        /// Integer square root for quadratic voting
+        fn integer_sqrt(n: BalanceOf<T>) -> BalanceOf<T> {
+            if n.is_zero() {
+                return Zero::zero();
+            }
+            
+            // Binary search for sqrt
+            let mut low = BalanceOf::<T>::from(1u32);
+            let mut high = n;
+            let mut result = Zero::zero();
+            
+            while low <= high {
+                let mid = (low.saturating_add(high)) / BalanceOf::<T>::from(2u32);
+                let square = Self::multiply_checked(mid, mid).unwrap_or(n);
+                
+                if square <= n {
+                    result = mid;
+                    low = mid.saturating_add(BalanceOf::<T>::from(1u32));
+                } else {
+                    high = mid.saturating_sub(BalanceOf::<T>::from(1u32));
+                }
+            }
+            
+            result
+        }
+        
+        /// Multiply two balances, returning None on overflow
+        fn multiply_checked(a: BalanceOf<T>, b: BalanceOf<T>) -> Option<BalanceOf<T>> {
+            // For u128, we can use checked_mul
+            let a_u128: u128 = a.saturated_into();
+            let b_u128: u128 = b.saturated_into();
+            a_u128.checked_mul(b_u128).map(|x| x.into())
         }
     }
 }

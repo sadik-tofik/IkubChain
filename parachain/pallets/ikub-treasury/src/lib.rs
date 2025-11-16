@@ -9,7 +9,7 @@ pub mod pallet {
         traits::{Currency, ReservableCurrency, Time},
     };
     use frame_system::pallet_prelude::*;
-    use sp_runtime::traits::{AccountIdConversion, Saturating};
+    use sp_runtime::traits::{AccountIdConversion, Saturating, Zero, SaturatedConversion};
     use scale_info::TypeInfo;
     use codec::{Decode, Encode, MaxEncodedLen};
 
@@ -29,6 +29,14 @@ pub mod pallet {
         /// Minimum number of signatures required
         #[pallet::constant]
         type MinSignatures: Get<u32>;
+        
+        /// Minimum contribution amount per cycle
+        #[pallet::constant]
+        type MinContribution: Get<BalanceOf<Self>>;
+        
+        /// Default contribution period in blocks
+        #[pallet::constant]
+        type DefaultContributionPeriod: Get<BlockNumberFor<Self>>;
     }
 
     #[pallet::pallet]
@@ -39,6 +47,7 @@ pub mod pallet {
     pub type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
     pub type ClubId = u64;
     pub type WithdrawalId = u64;
+    pub type ContributionCycleId = u64;
 
     /// Withdrawal status
     #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo, MaxEncodedLen)]
@@ -61,6 +70,37 @@ pub mod pallet {
         pub status: WithdrawalStatus,
         pub signatures: BoundedVec<T::AccountId, T::MaxSigners>,
         pub created_at: BlockNumberFor<T>,
+    }
+
+    /// Contribution cycle status
+    #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo, MaxEncodedLen)]
+    pub enum CycleStatus {
+        Open,
+        Closed,
+        Distributed,
+    }
+
+    /// Contribution cycle
+    #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub struct ContributionCycle<T: Config> {
+        pub id: ContributionCycleId,
+        pub club_id: ClubId,
+        pub start_block: BlockNumberFor<T>,
+        pub end_block: BlockNumberFor<T>,
+        pub total_contributions: BalanceOf<T>,
+        pub returns: BalanceOf<T>,
+        pub status: CycleStatus,
+        pub minimum_contribution: BalanceOf<T>,
+    }
+
+    /// Individual contribution record
+    #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub struct Contribution<T: Config> {
+        pub contributor: T::AccountId,
+        pub amount: BalanceOf<T>,
+        pub contributed_at: BlockNumberFor<T>,
     }
 
     /// Storage: Treasury balances per club
@@ -98,6 +138,55 @@ pub mod pallet {
         ValueQuery,
     >;
 
+    /// Storage: Contribution cycles
+    #[pallet::storage]
+    #[pallet::getter(fn contribution_cycles)]
+    pub type ContributionCycles<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        ClubId,
+        Blake2_128Concat,
+        ContributionCycleId,
+        ContributionCycle<T>,
+        OptionQuery,
+    >;
+
+    /// Storage: Active cycle per club
+    #[pallet::storage]
+    #[pallet::getter(fn active_cycle)]
+    pub type ActiveCycle<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        ClubId,
+        ContributionCycleId,
+        OptionQuery,
+    >;
+
+    /// Storage: Cycle counter per club
+    #[pallet::storage]
+    #[pallet::getter(fn cycle_count)]
+    pub type CycleCount<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        ClubId,
+        ContributionCycleId,
+        ValueQuery,
+    >;
+
+    /// Storage: Contributions per cycle
+    #[pallet::storage]
+    #[pallet::getter(fn contributions)]
+    pub type Contributions<T: Config> = StorageNMap<
+        _,
+        (
+            NMapKey<Blake2_128Concat, ClubId>,
+            NMapKey<Blake2_128Concat, ContributionCycleId>,
+            NMapKey<Blake2_128Concat, T::AccountId>,
+        ),
+        Contribution<T>,
+        OptionQuery,
+    >;
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
@@ -127,6 +216,31 @@ pub mod pallet {
             recipient: T::AccountId,
             amount: BalanceOf<T>,
         },
+        /// Contribution cycle opened
+        CycleOpened {
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+            end_block: BlockNumberFor<T>,
+        },
+        /// Contribution made to cycle
+        ContributionMade {
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+            contributor: T::AccountId,
+            amount: BalanceOf<T>,
+        },
+        /// Cycle closed
+        CycleClosed {
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+            total_contributions: BalanceOf<T>,
+        },
+        /// Returns distributed
+        ReturnsDistributed {
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+            total_returns: BalanceOf<T>,
+        },
     }
 
     #[pallet::error]
@@ -143,6 +257,16 @@ pub mod pallet {
         InsufficientSignatures,
         /// Withdrawal not ready
         WithdrawalNotReady,
+        /// Cycle not found
+        CycleNotFound,
+        /// Cycle not open
+        CycleNotOpen,
+        /// Contribution below minimum
+        ContributionBelowMinimum,
+        /// Cycle not closed
+        CycleNotClosed,
+        /// No returns to distribute
+        NoReturnsToDistribute,
     }
 
     #[pallet::call]
@@ -309,6 +433,281 @@ pub mod pallet {
             });
             
             Ok(())
+        }
+
+        /// Open a new contribution cycle
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(2))]
+        #[pallet::call_index(4)]
+        pub fn open_contribution_cycle(
+            origin: OriginFor<T>,
+            club_id: ClubId,
+            contribution_period: Option<BlockNumberFor<T>>,
+            minimum_contribution: Option<BalanceOf<T>>,
+        ) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            
+            // Check no active cycle exists
+            ensure!(
+                !ActiveCycle::<T>::contains_key(club_id),
+                Error::<T>::CycleNotClosed
+            );
+            
+            let cycle_id = Self::cycle_count(club_id);
+            let new_count = cycle_id.saturating_add(1);
+            CycleCount::<T>::insert(club_id, new_count);
+            
+            let now = <frame_system::Pallet<T>>::block_number();
+            let period = contribution_period.unwrap_or(T::DefaultContributionPeriod::get());
+            let min_contrib = minimum_contribution.unwrap_or(T::MinContribution::get());
+            let end_block = now.saturating_add(period);
+            
+            let cycle = ContributionCycle {
+                id: cycle_id,
+                club_id,
+                start_block: now,
+                end_block,
+                total_contributions: Zero::zero(),
+                returns: Zero::zero(),
+                status: CycleStatus::Open,
+                minimum_contribution: min_contrib,
+            };
+            
+            ContributionCycles::<T>::insert(club_id, cycle_id, &cycle);
+            ActiveCycle::<T>::insert(club_id, cycle_id);
+            
+            Self::deposit_event(Event::CycleOpened {
+                club_id,
+                cycle_id,
+                end_block,
+            });
+            
+            Ok(())
+        }
+
+        /// Contribute to the active cycle
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(2))]
+        #[pallet::call_index(5)]
+        pub fn contribute(
+            origin: OriginFor<T>,
+            club_id: ClubId,
+            amount: BalanceOf<T>,
+        ) -> DispatchResult {
+            let contributor = ensure_signed(origin)?;
+            
+            let cycle_id = Self::active_cycle(club_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            let mut cycle = Self::contribution_cycles(club_id, cycle_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            ensure!(
+                cycle.status == CycleStatus::Open,
+                Error::<T>::CycleNotOpen
+            );
+            
+            let now = <frame_system::Pallet<T>>::block_number();
+            ensure!(
+                now <= cycle.end_block,
+                Error::<T>::CycleNotOpen
+            );
+            
+            ensure!(
+                amount >= cycle.minimum_contribution,
+                Error::<T>::ContributionBelowMinimum
+            );
+            
+            // Transfer funds to treasury
+            T::Currency::transfer(
+                &contributor,
+                &Self::treasury_account_id(club_id),
+                amount,
+                ExistenceRequirement::KeepAlive,
+            )?;
+            
+            // Update or create contribution record
+            let existing_contrib = Self::contributions(club_id, cycle_id, &contributor);
+            if let Some(mut contrib) = existing_contrib {
+                contrib.amount = contrib.amount.saturating_add(amount);
+                Contributions::<T>::insert((club_id, cycle_id, &contributor), &contrib);
+            } else {
+                let contrib = Contribution {
+                    contributor: contributor.clone(),
+                    amount,
+                    contributed_at: now,
+                };
+                Contributions::<T>::insert((club_id, cycle_id, &contributor), &contrib);
+            }
+            
+            // Update cycle totals
+            cycle.total_contributions = cycle.total_contributions.saturating_add(amount);
+            TreasuryBalances::<T>::mutate(club_id, |balance| *balance = balance.saturating_add(amount));
+            ContributionCycles::<T>::insert(club_id, cycle_id, &cycle);
+            
+            Self::deposit_event(Event::ContributionMade {
+                club_id,
+                cycle_id,
+                contributor,
+                amount,
+            });
+            
+            Ok(())
+        }
+
+        /// Close the active contribution cycle
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::call_index(6)]
+        pub fn close_cycle(
+            origin: OriginFor<T>,
+            club_id: ClubId,
+        ) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            
+            let cycle_id = Self::active_cycle(club_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            let mut cycle = Self::contribution_cycles(club_id, cycle_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            ensure!(
+                cycle.status == CycleStatus::Open,
+                Error::<T>::CycleNotOpen
+            );
+            
+            let now = <frame_system::Pallet<T>>::block_number();
+            ensure!(
+                now > cycle.end_block,
+                Error::<T>::CycleNotClosed
+            );
+            
+            cycle.status = CycleStatus::Closed;
+            ContributionCycles::<T>::insert(club_id, cycle_id, &cycle);
+            ActiveCycle::<T>::remove(club_id);
+            
+            Self::deposit_event(Event::CycleClosed {
+                club_id,
+                cycle_id,
+                total_contributions: cycle.total_contributions,
+            });
+            
+            Ok(())
+        }
+
+        /// Set returns for a closed cycle and distribute them
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(3))]
+        #[pallet::call_index(7)]
+        pub fn distribute_returns(
+            origin: OriginFor<T>,
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+            returns: BalanceOf<T>,
+        ) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            
+            let mut cycle = Self::contribution_cycles(club_id, cycle_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            ensure!(
+                cycle.status == CycleStatus::Closed,
+                Error::<T>::CycleNotClosed
+            );
+            
+            ensure!(
+                returns > Zero::zero(),
+                Error::<T>::NoReturnsToDistribute
+            );
+            
+            cycle.returns = returns;
+            cycle.status = CycleStatus::Distributed;
+            ContributionCycles::<T>::insert(club_id, cycle_id, &cycle);
+            
+            // Distribute returns proportionally: share = (user_contribution / total_contribution) * returns
+            if cycle.total_contributions > Zero::zero() {
+                // Iterate through all contributions and distribute
+                // Note: In production, this would need to be optimized for large numbers of contributors
+                // For MVP, we'll use a simplified approach
+                let treasury_account = Self::treasury_account_id(club_id);
+                let total = cycle.total_contributions;
+                
+                // Calculate distribution for each contributor
+                // This is a simplified version - in production, you'd iterate through all contributions
+                // For MVP, we store the returns in the cycle and let users claim them individually
+                // via a separate claim function
+            }
+            
+            Self::deposit_event(Event::ReturnsDistributed {
+                club_id,
+                cycle_id,
+                total_returns: returns,
+            });
+            
+            Ok(())
+        }
+
+        /// Claim returns from a distributed cycle
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(2))]
+        #[pallet::call_index(8)]
+        pub fn claim_returns(
+            origin: OriginFor<T>,
+            club_id: ClubId,
+            cycle_id: ContributionCycleId,
+        ) -> DispatchResult {
+            let claimant = ensure_signed(origin)?;
+            
+            let cycle = Self::contribution_cycles(club_id, cycle_id)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            ensure!(
+                cycle.status == CycleStatus::Distributed,
+                Error::<T>::CycleNotClosed
+            );
+            
+            let contribution = Self::contributions(club_id, cycle_id, &claimant)
+                .ok_or(Error::<T>::CycleNotFound)?;
+            
+            // Calculate share: (user_contribution / total_contribution) * returns
+            let share = if cycle.total_contributions > Zero::zero() {
+                // Use fixed point arithmetic: share = (contribution * returns) / total
+                // For u128, we can use checked arithmetic
+                let contrib_u128: u128 = contribution.amount.saturated_into();
+                let returns_u128: u128 = cycle.returns.saturated_into();
+                let total_u128: u128 = cycle.total_contributions.saturated_into();
+                
+                let share_u128 = contrib_u128
+                    .checked_mul(returns_u128)
+                    .and_then(|x| x.checked_div(total_u128))
+                    .unwrap_or(0);
+                
+                BalanceOf::<T>::saturated_from(share_u128)
+            } else {
+                Zero::zero()
+            };
+            
+            ensure!(
+                share > Zero::zero(),
+                Error::<T>::NoReturnsToDistribute
+            );
+            
+            // Transfer share from treasury
+            T::Currency::transfer(
+                &Self::treasury_account_id(club_id),
+                &claimant,
+                share,
+                ExistenceRequirement::AllowDeath,
+            )?;
+            
+            TreasuryBalances::<T>::mutate(club_id, |balance| *balance = balance.saturating_sub(share));
+            
+            Ok(())
+        }
+    }
+
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+            // Auto-close expired cycles
+            // This would iterate through active cycles and close expired ones
+            // For MVP, we'll rely on manual closing
+            Weight::zero()
         }
     }
 

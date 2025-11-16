@@ -11,8 +11,8 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 frame-support = { version = "4.0.0", default-features = false }
 frame-system = { version = "4.0.0", default-features = false }
-xcm = { version = "3.0.0", default-features = false }
 sp-runtime = { version = "6.0.0", default-features = false }
+pallet-balances = { version = "4.0.0", default-features = false }
 
 [features]
 default = ["std"]
@@ -21,7 +21,7 @@ std = [
     "scale-info/std",
     "frame-support/std",
     "frame-system/std",
-    "xcm/std",
     "sp-runtime/std",
+    "pallet-balances/std",
 ]
 
