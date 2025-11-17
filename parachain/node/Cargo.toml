@@ -15,10 +15,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "ikubchain"
 path = "src/main.rs"
 
-[lib]
-name = "ikubchain_runtime"
-path = "src/lib.rs"
-
 [features]
 default = ["std"]
 std = [
@@ -40,9 +36,17 @@ std = [
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
+    "sc-consensus-aura/std",
+    "sc-consensus-babe/std",
+    "sc-finality-grandpa/std",
+    "sc-keystore/std",
+    "sc-rpc/std",
+    "sc-telemetry/std",
+    "sc-transaction-pool/std",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",
+    "sp-consensus-babe/std",
     "sp-core/std",
     "sp-inherents/std",
     "sp-io/std",
@@ -52,6 +56,7 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
+    "ikubchain-runtime/std",
 ]
 
 [dependencies]
@@ -63,10 +68,9 @@ pallet-ikub-disputes = { path = "../pallets/ikub-disputes", default-features = f
 pallet-ikub-analytics = { path = "../pallets/ikub-analytics", default-features = false }
 pallet-ikub-crosschain = { path = "../pallets/ikub-crosschain", default-features = false }
 
-# Substrate dependencies
+# Substrate runtime dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false, optional = true }
-frame-executive = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false, optional = true }
@@ -78,15 +82,50 @@ pallet-insecure-randomness-collective-flip = { git = "https://github.com/parityt
 pallet-sudo = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+
+# Node dependencies - Using the same git revision as the runtime
+frame-executive = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-cli = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-consensus-aura = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-executor = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-keystore = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-rpc = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-service = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sc-telemetry = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false, features = ["jsonrpc"] }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+
+# Primitives - Using the same git revision as the runtime
 sp-api = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-block-builder = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-consensus-babe = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-inherents = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-offchain = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-keystore = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-session = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+sp-timestamp = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate.git", rev = "ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65", default-features = false }
+
+# Runtime dependencies
+ikubchain-runtime = { path = "../runtime", default-features = false }
+
+# Utility dependencies
+futures = "0.3.28"
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+jsonrpc-derive = "18.0.0"
+jsonrpc-pubsub = "18.0.0"
+log = "0.4.17"
+parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = { version = "1.0.96", features = ["raw_value"] }
+thiserror = "1.0.40"
+tokio = { version = "1.28.2", features = ["rt-multi-thread", "time", "macros"] }

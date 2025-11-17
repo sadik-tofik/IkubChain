@@ -1,0 +1,91 @@
+[package]
+name = "ikubchain-node"
+version = "0.1.0"
+edition = "2021"
+authors = ['IkubChain Team']
+description = 'IkubChain Node Implementation'
+license = 'Apache-2.0'
+publish = false
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[build-dependencies]
+substrate-build-script-utils = "4.0.0"
+
+[features]
+# Enable this when building with `--features runtime-benchmarks` to enable runtime benchmark
+# related code paths in the runtime and node.
+# Note: This feature is enabled automatically when the `ci-bench` profile is enabled.
+runtime-benchmarks = ['ikubchain-runtime/runtime-benchmarks']
+
+try-runtime = [
+    'ikubchain-runtime/try-runtime',
+    'frame-try-runtime',
+    'frame-support/try-runtime',
+]
+
+# Enable this when building with `--features fast-runtime` to enable faster but less secure hashing
+# algorithms for the runtime.
+fast-runtime = [
+    'ikubchain-runtime/fast-runtime',
+]
+
+# Enable this when building with `--features with-tracing` to enable more detailed logging.
+with-tracing = [
+    'sc-tracing/proc-macro',
+    'sc-cli/tracing',
+    'sc-service/tracing',
+]
+
+default = []
+
+[dependencies]
+# Substrate dependencies
+frame-benchmarking = { version = "6.0.0", default-features = false, optional = true }
+frame-executive = { version = "6.0.0", default-features = false }
+frame-support = { version = "6.0.0", default-features = false }
+frame-system = { version = "6.0.0", default-features = false, features = ['runtime-benchmarks'] }
+frame-system-benchmarking = { version = "6.0.0", default-features = false, optional = true }
+frame-system-rpc-runtime-api = { version = "6.0.0", default-features = false }
+
+# Substrate primitives
+sp-api = { version = "6.0.0", default-features = false }
+sp-block-builder = { version = "6.0.0", default-features = false }
+sp-consensus-aura = { version = "1.0.0-dev", default-features = false }
+sp-core = { version = "6.0.0", default-features = false }
+sp-inherents = { version = "6.0.0", default-features = false }
+sp-io = { version = "6.0.0", default-features = false }
+sp-keystore = { version = "0.10.0", default-features = false }
+sp-runtime = { version = "6.0.0", default-features = false }
+sp-timestamp = { version = "6.0.0", default-features = false, features = ['inherent'] }
+sp-transaction-pool = { version = "6.0.0", default-features = false }
+sp-version = { version = "6.0.0", default-features = false }
+
+# Node dependencies
+sc-cli = { version = "0.10.0", default-features = false, features = ['wasmtime-runtime'] }
+sc-consensus-aura = { version = "0.10.0", default-features = false }
+sc-consensus-babe = { version = "0.10.0", default-features = false, optional = true }
+sc-executor = { version = "0.10.0", default-features = false, features = ['wasmtime'] }
+sc-finality-grandpa = { version = "0.10.0", default-features = false }
+sc-keystore = { version = "0.10.0", default-features = false }
+sc-rpc = { version = "6.0.0", default-features = false }
+sc-rpc-api = { version = "0.10.0", default-features = false }
+sc-service = { version = "0.10.0", default-features = false, features = ['wasmtime'] }
+sc-telemetry = { version = "6.0.0", default-features = false }
+sc-transaction-pool = { version = "6.0.0", default-features = false }
+sc-transaction-pool-api = { version = "6.0.0", default-features = false }
+
+# Local dependencies
+ikubchain-runtime = { path = "../parachain/runtime", default-features = false }
+
+[build-dependencies]
+substrate-wasm-builder = { version = "6.0.0", default-features = false }
+
+[workspace]
+members = [
+    "node",
+    "pallets/*",
+    "runtime",
+]
+resolver = "2"
